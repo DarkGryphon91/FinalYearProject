@@ -1,10 +1,13 @@
-import pyPdf, sys, zipfile
+import pyPdf, sys, zipfile, struct
 import PIL
 import xml.dom.minidom as xmlDOM
 import xml.etree.ElementTree as ET 
 from pyPdf import PdfFileReader
 from PIL import Image
 from PIL.ExifTags import TAGS
+from hachoir_metadata import metadata
+from hachoir_core.cmd.line import unicodeFilename
+from hachoir parser import createParser
 
 class switch(object):
     def __init__(self, value):
@@ -39,7 +42,7 @@ while True:
    for case in switch(choice):
        if case('1'):
 	   print "You chose to retrieve PDF metadata."
-	   fileName="GettingStarted.pdf"
+	   fileName=raw_input("Please enter the name of the pdf document: ")
 	   pdfFile = PdfFileReader(file(fileName, 'rb')) 
 	   docInfo = pdfFile.getDocumentInfo() 
 	   print '[*] PDF MetaData For: ' + str(fileName)
@@ -48,43 +51,51 @@ while True:
 	   break
        if case('2'):
 	   print "You chose to retrieve Video File metadata."
-	   videofile=open("Sleepy.Hollow.S02E07.mp4", "rb")
-	   tagdata=videofile.read(20000)
-	   print str(tagdata)
+	   filename = raw_input("Please enter the name of the video file: ")
+	   filename, realname = unicodeFilename(filename), filename
+	   parser = createParser(filename)
+
+	   for k,v in metadata.extractMetadata(parser)._Metadata__data.iteritems():
+	      if v.values:
+                 print v.key, v.values[0].value
 	   break
        if case('3'):
 	   print "You chose to retrieve Image File metadata."
-	   imgFileName="DSC_0001.jpg"
+	   imgFileName=raw_input("Please enter the name of the image: ")
 	   immetfile=open("imageMetadata.txt", "w+")
 	   for (k,v) in Image.open(imgFileName)._getexif().iteritems():
-        	#print '%s = %s' % (TAGS.get(k), v)
 		immet='%s = %s'%(TAGS.get(k), v)
 		immetfile.write(immet+'\n')
+	   print "The metadata for this file can be found in: imageMetadata.txt"
 	   break
        if case('4'):
 	   print "You chose to retrieve Audio File metadata."
-	   MP3tagList=["TP1", "TT2", "PRIV", "TCOM", "TCON"]
-	   WMAtaglist=["/Year", "/EncodingTIme", "/Composer", "/Publishe", "/Genre",
-		       "/AlbumTitle", "/AlbumArtist", "/MCDI", "/TrackNumber"]
-	   afile="03 Supermassive Black Hole.wma"
+	   afile=raw_input("Please enter the name of the mp3 file: ")
 	   audiofile=open(afile, "rb")
-	   if "." in afile:
-		filetype=afile.split('.')[1]
-		for ftype in switch(filetype):
-		   if ftype("mp3"):
-			print "Decoding mp3 file"
-			break
-		   if ftype("wma"):
-			print "Decoding wma file"
-	   		tagdata=audiofile.read(8000)
-	   		for tag in WMAtaglist:
-			   posmeta=tagdata.find(tag)
-			   print ""+tag+": "+str(tagdata[posmeta+8])+"\n"
-			break
+	   mdfile=open("audioMetadata.txt", "w+")
+	   print "Decoding mp3 file"
+	   md=audiofile.read(1500)
+	   print repr(md)
+	   metad=repr(md)
+	   mdfile.write(metad)
+	   mp3TagList={"AENC":"Audio Encryption", "APIC":"Attached Picture", "COMM":"Comments", "COMR":"Commercial Frame", "ENCR":"Encryption method registration", "EQUA":"Equalisation", "ETCO":"Event timing codes", "GEOB":"General Encapsulated Object", "GRID":"Group Identification Registration", "IPLS":"Involoved People list", "LINK":"Linked Information", "MCDI":"Music CD Identifier", "MLLT":"MPEG Location Lookup Table", "OWNE":"Ownership Frame", "PRIV":"Private Frame", "PCNT":"Play COunter", "POPM":"Popularimeter", "POSS":"Position Synchronisation Frame", "RBUF":"Recommended Buffer Size", "RVAD":"Relative Volume Adjustment", "RVRB":"Reverb", "SYLT":"Synchronised Lyric/Text", "SYTC":"Synchronised Tempo Codes", "TALB":"Album", "TBPM":"Beats Per Minute", "TCOM":"Composer", "TCON":"Content Type", "TCOP":"Copyright Message", "TDAT":"Date", "TDLY":"Playlist Delay", "TENC":"Encoded By", "TEXT":"Lyricist/Text Writer", "TFLT":"File Type", "TIME":"Time", "TIT1":"Content Group Description", "TIT2":"Title", "TIT3":"Subtitle", "TKEY":"Initial Key", "TLAN":"Language", "TLEN":"Length", "TMED":"Media Type", "TOAL":"Original Album", "TOFN":"Original Filename", "TOLY":"Original Lyricist/Text Writer", "TOPE":"Original Artist", "TORY":"Original Release Year", "TOWN":"File Owner", "TPE1":"Lead Performer", "TPE2":"Band Accompaniment", "TPE3":"Conductor", "TPE4":"Interpreted By", "TPOS":"Part of a Set", "TPUB":"Publisher", "TRCK":"Track Number", "TRDA":"Recording Dates", "TRSN":"Internet Radio Station Name", "TRSO":"Internet Radio Station Owner", "TSIZ":"Size", "TSRC":"International Standard Recording Code", "TSSE":"Software/Hardware and settings used for encoding", "TYER":"Year", "TXXX":"User defined test information frame", "UFID":"Unique File Indentifier", "USER":"Terms of Use", "USLT":"Unsynchronised Lyric Transcription", "WCOM":"Commercial Information", "WCOP":"Copyright Information", "WOAF":"Official audio file webpage", "WOAR":"Official artist/performer webpage", "WOAS":"Official audio source webpage", "WORS":"Official internet radio station homepage", "WPAY":"Payment", "WPUB":"Publishers official webpage", "WXXX":"User defined URL link frame"}
+	   byteList=["\\x00","\\x01","\\x02","\\x03","\\x04","\\x05","\\x06","\\x07",
+	  	     "\\x08","\\x09","\\x0a","\\x0b","\\x0c","\\x0d","\\x0e","\\x0f"]
+	   print metad
+	   for byte in byteList:
+   		metad=metad.replace(byte, '')
+		print metad
+	   for tag,meaning in mp3TagList.iteritems():
+   		tagPos=metad.find(tag)
+   		if tagPos>0:
+		   metad=metad[:tagPos]+'\n'+metad[tagPos:]
+		   metad=metad.replace(tag, meaning)
+	   print metad	
 	   break
        if case('5'):
 	   print "You chose to retrieve Microsoft Office Documents metadata."
-	   zfile=zipfile.ZipFile('1)Number Theory Notes.pptx')
+	   docfile=raw_input("Please enter the name of the Microsoft Office document: ")
+	   zfile=zipfile.ZipFile(docfile)
 	   xml=ET.XML(zfile.read('docProps/core.xml'))
 	   xml=ET.tostring(xml)
 	   xml=xmlDOM.parseString(xml)

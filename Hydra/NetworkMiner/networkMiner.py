@@ -6,16 +6,17 @@ from struct import *
 try:
    s=socket.socket( socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
 except socket.error, msg:
-   print 'Socket could not be created. Error COde: '+str(msg[0])+'Message'+str(msg[1])
+   print 'Socket could not be created. Error Code: '+str(msg[0])+'Message'+str(msg[1])
    sys.exit()
 
-lowip=raw_input("Enter the lowest IP Address of the range you wish to scan: ")
-highip=raw_input("Enter the highest IP Address of the range you wish to scan: ")
-lowip=lowip.replace('.', '')
-print ''+str(lowip)
-highip=highip.replace('.', '')
-print ''+str(highip)
+scanType=raw_input("Would you like to perform a quick or a full scan? ")
+if scanType=="quick" or scanType=="Quick":
+   maxPort=1024
+elif scanType=="full" or scanType=="Full":
+   maxPort=65535
+
 exists=False
+previousip=set()
 while True:
    packet=s.recvfrom(65565)
    packet =packet[0]
@@ -32,16 +33,19 @@ while True:
        s_addr=str(s_addr)
        s_addr2=s_addr.replace('.', '')
        previousip=list() 
-       if int(s_addr2) in range(int(lowip), int(highip)) and s_addr!='127.0.0.1':
-          if not s_addr in previousip and not exists:
+       if s_addr!='127.0.0.1':
+          if s_addr not in previousip and not exists:
 	       print 'TTL: '+str(ttl)+' IP Address: '+s_addr+' Packet Size: ' +str(len(packet))
-               previousip=[s_addr]
-	       exists=True
+               #previousip=[s_addr]
+	       #list(set(previousip))
+	      # exists=True
 	       if ttl==64:
 	           print ' Operating System: Linux'
                elif ttl==128:
 	           print ' Operating System: Windows'
-	       for port in range(1, 65535):
+	       elif ttl==255:
+		   print ' Operating System: Mac/Cisco'
+	       for port in range(1, maxPort):
                    try:
 		      sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                       sock.connect((s_addr, port))
