@@ -87,7 +87,7 @@ while True:
 	   host=raw_input("Please enter the login url for the webiste: ")
 	   usr=raw_input("Please enter the username to crack: ")
 	   website=urllib2.HTTPHandler(host)
-	   wl=("Please enter the password list: ")
+	   wl=raw_input("Please enter the password list: ")
 	   badLogin="error_invalid_auth"
 	   words=open(wl, "r").readlines()
 	   print "Words loaded: ", len(words)

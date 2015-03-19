@@ -6,8 +6,8 @@ from pyPdf import PdfFileReader
 from PIL import Image
 from PIL.ExifTags import TAGS
 from hachoir_metadata import metadata
-from hachoir_core.cmd.line import unicodeFilename
-from hachoir parser import createParser
+from hachoir_core.cmd_line import unicodeFilename
+from hachoir_parser import createParser
 
 class switch(object):
     def __init__(self, value):
